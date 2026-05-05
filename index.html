@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>菲的心事</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: "Microsoft YaHei", "SimSun", sans-serif;
+            overflow: hidden;
+        }
+
+        #game {
+            width: 960px;
+            height: 640px;
+            position: relative;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #bg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+        #charLayer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        .char-img {
+            position: absolute;
+            bottom: 0;
+            max-height: 520px;
+            object-fit: contain;
+            transition: opacity 0.3s;
+            z-index: 55;
+            filter: brightness(1.05);
+        }
+        .char-right { right: 40px; }
+        .char-left { left: 40px; }
+        .char-center { left: 50%; transform: translateX(-50%); }
+
+        /* 右上角设置 */
+        #topBar {
+            position: absolute;
+            top: 10px; right: 10px;
+            z-index: 60;
+        }
+        .top-btn {
+            width: 44px; height: 44px;
+            background: rgba(255,255,255,0.5);
+            border: 2px solid rgba(255,182,193,0.6);
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #333;
+            font-weight: bold;
+            font-family: inherit;
+        }
+        .top-btn:hover { background: rgba(255,182,193,0.5); }
+
+        /* 设置面板 */
+        #settingsPanel {
+            position: absolute; top: 60px; right: 10px;
+            width: 260px;
+            background: rgba(255,255,255,0.85); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,182,193,0.6); border-radius: 12px;
+            padding: 0; display: none; z-index: 65; overflow: hidden;
+        }
+        .sp-tabs {
+            display: flex; border-bottom: 1px solid rgba(255,182,193,0.4);
+        }
+        .sp-tab {
+            flex: 1; padding: 10px; text-align: center; cursor: pointer;
+            font-size: 14px; color: #888; background: rgba(255,255,255,0.3);
+            border: none; font-family: inherit; transition: all 0.2s;
+        }
+        .sp-tab.active { color: #e75480; background: rgba(255,182,193,0.15); font-weight: bold; }
+        .sp-tab:hover { color: #e75480; }
+        .sp-content { padding: 12px; max-height: 280px; overflow-y: auto; }
+        .sp-page { display: none; }
+        .sp-page.active { display: block; }
+
+        /* 背包 */
+        .bag-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px; margin-bottom: 6px;
+            background: rgba(255,255,255,0.5); border-radius: 6px;
+        }
+        .bag-item .bi-icon { font-size: 24px; }
+        .bag-item .bi-name { color: #333; font-size: 14px; }
+        .bag-empty { color: #999; font-size: 13px; text-align: center; padding: 20px 0; }
+
+        /* 存档 */
+        .save-slot {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 10px; margin-bottom: 6px;
+            background: rgba(255,255,255,0.5); border-radius: 6px;
+        }
+        .save-slot .slot-info { font-size: 12px; color: #555; }
+        .save-slot .slot-btns { display: flex; gap: 6px; }
+        .slot-btn {
+            padding: 4px 12px; font-size: 12px; font-family: inherit;
+            background: rgba(255,182,193,0.4); border: 1px solid rgba(255,182,193,0.6);
+            border-radius: 4px; cursor: pointer; color: #333;
+        }
+        .slot-btn:hover { background: rgba(255,182,193,0.7); }
+
+        /* 小游戏 */
+        #minigame { position: absolute; top:0;left:0;right:0;bottom:0; display: none; z-index: 40; }
+        #minigame canvas { width: 100%; height: 100%; }
+
+        /* 对话框 */
+        #textBox {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(255,255,255,0.88) 18%);
+            padding: 50px 320px 28px 30px;
+            min-height: 170px;
+            cursor: pointer;
+            z-index: 50;
+        }
+        #speaker {
+            color: #e75480;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+        }
+        #dialog {
+            color: #333;
+            font-size: 17px;
+            line-height: 1.9;
+            letter-spacing: 1px;
+            min-height: 50px;
+        }
+        #dialog.narrator {
+            color: #666;
+            font-style: italic;
+            letter-spacing: 2px;
+        }
+        #hint {
+            position: absolute;
+            bottom: 10px; right: 24px;
+            color: rgba(0,0,0,0.3);
+            font-size: 14px;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%,100% { opacity: 1; } 50% { opacity: 0.2; }
+        }
+
+        /* 章节标题 */
+        #chapterTitle {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.75);
+            z-index: 70;
+        }
+        #chapterTitle h2 {
+            font-size: 48px;
+            color: #ffb6c1;
+            text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
+            margin-bottom: 16px;
+        }
+        #chapterTitle p {
+            font-size: 22px;
+            color: #ddd;
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.6);
+        }
+
+        /* 选项框 */
+        #choiceBox {
+            position: absolute;
+            bottom: 240px; left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 55;
+            width: 70%;
+        }
+        #choiceInner {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .choice-btn {
+            background: rgba(0,0,0,0.8);
+            border: 2px solid rgba(255,182,193,0.6);
+            color: #fff;
+            padding: 16px 24px;
+            font-size: 17px;
+            font-family: inherit;
+            cursor: pointer;
+            text-align: center;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .choice-btn:hover {
+            background: rgba(255,182,193,0.25);
+            border-color: #ffb6c1;
+            transform: scale(1.02);
+        }
+
+        /* 物品弹窗 */
+        #itemPopup {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            background: rgba(255,255,255,0.65);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(255,182,193,0.7);
+            border-radius: 12px;
+            padding: 30px 40px;
+            text-align: center;
+            display: none;
+            z-index: 80;
+            animation: popIn 0.3s ease-out;
+        }
+        @keyframes popIn {
+            from { transform: translate(-50%,-50%) scale(0.6); opacity: 0; }
+            to { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+        }
+        #itemPopup h3 {
+            color: #e75480;
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+        #itemPopup .icon {
+            font-size: 48px;
+            margin: 12px 0;
+        }
+        #itemPopup .desc {
+            color: #555;
+            font-size: 15px;
+        }
+        #itemPopup .from {
+            color: #999;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+
+        /* 黑幕 */
+        #overlay {
+            position: absolute; top:0;left:0;right:0;bottom:0;
+            background: #000; z-index: 100; pointer-events: none; opacity: 0;
+        }
+
+        /* 星空场景 */
+        #starCanvas {
+            position: absolute; top:0;left:0;
+            width: 100%; height: 100%;
+            display: none; z-index: 5;
+        }
+
+        /* 浮动文字 */
+        #floatText {
+            position: absolute; top:0;left:0;right:0;bottom:0;
+            display: none; z-index: 45;
+            pointer-events: none;
+        }
+        .float-line {
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            color: rgba(255,255,255,0.9);
+            font-size: 20px;
+            text-shadow: 0 0 10px rgba(255,182,193,0.5);
+            opacity: 0;
+            transition: opacity 1.5s;
+            text-align: center;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <img id="bg" src="" alt="">
+        <div id="charLayer"></div>
+
+        <canvas id="starCanvas" width="960" height="640"></canvas>
+        <div id="floatText"></div>
+
+        <div id="chapterTitle"><h2></h2><p></p></div>
+        <div id="choiceBox"></div>
+
+        <div id="itemPopup">
+            <h3>获得物品</h3>
+            <div class="icon"></div>
+            <div class="desc"></div>
+            <div class="from"></div>
+        </div>
+
+        <div id="topBar">
+            <button class="top-btn" id="btnSettings">设置</button>
+        </div>
+
+        <div id="settingsPanel">
+            <div class="sp-tabs">
+                <button class="sp-tab active" data-page="bagPage">背包</button>
+                <button class="sp-tab" data-page="savePage">存档</button>
+            </div>
+            <div class="sp-content">
+                <div class="sp-page active" id="bagPage">
+                    <div id="bagList"><div class="bag-empty">暂无物品</div></div>
+                </div>
+                <div class="sp-page" id="savePage">
+                    <div id="saveSlots"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="minigame"><canvas id="mgCanvas" width="960" height="640"></canvas></div>
+
+        <div id="textBox">
+            <div id="speaker"></div>
+            <div id="dialog"></div>
+            <div id="hint">▼</div>
+        </div>
+
+        <div id="overlay"></div>
+    </div>
+
+    <script src="vn-engine.js"></script>
+    <script src="story.js"></script>
+</body>
+</html>
