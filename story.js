@@ -58,7 +58,7 @@ const STORY_AFTER_PLAY = [
     { type: 'dialog', speaker: '小宇', text: '这是我最喜欢的弹珠，送给你。这样你就能一直记得我了。' },
     { type: 'dialog', speaker: '小菲', text: '傻瓜，我们又不会分开，干嘛要记得。' },
     { type: 'dialog', speaker: '', text: '小菲笑着接过弹珠，小心地放进口袋里。' },
-    { type: 'item', name: '弹珠', icon: '🔵', desc: '一颗蓝色的弹珠，像大海的颜色', from: '小宇赠送' },
+    { type: 'item', name: '弹珠', icon: '<div class="marble"></div>', desc: '一颗极光色的玻璃珠，像星空的颜色', from: '小宇赠送' },
     { type: 'dialog', speaker: '', text: '她不知道，这颗弹珠会成为最珍贵的回忆。' },
     { type: 'chapter', title: '第一章 第二幕', subtitle: '说不出口的再见' },
     { type: 'bg', src: 'img-bg/ch1/moving.webp' },

@@ -590,7 +590,12 @@ class VNEngine {
 
         this.itemPopup.style.display = 'block';
         this.textBox.style.display = 'none';
-        this.itemPopup.querySelector('.icon').textContent = icon;
+        const iconEl = this.itemPopup.querySelector('.icon');
+        if (icon.includes('<')) {
+            iconEl.innerHTML = icon;
+        } else {
+            iconEl.textContent = icon;
+        }
         this.itemPopup.querySelector('.desc').textContent = desc;
         this.itemPopup.querySelector('.from').textContent = from ? ('—— ' + from) : '';
         this.updateBag();
