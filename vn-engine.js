@@ -165,7 +165,12 @@ class VNEngine {
     showItemDetail(item) {
         this.itemPopup.style.display = 'block';
         this.itemPopup.querySelector('h3').textContent = item.name;
-        this.itemPopup.querySelector('.icon').textContent = item.icon;
+        const iconEl = this.itemPopup.querySelector('.icon');
+        if (item.icon.includes('<')) {
+            iconEl.innerHTML = item.icon;
+        } else {
+            iconEl.textContent = item.icon;
+        }
         this.itemPopup.querySelector('.desc').textContent = item.desc || '';
         this.itemPopup.querySelector('.from').textContent = item.from ? ('—— ' + item.from) : '';
         clearTimeout(this._itemTimer);
